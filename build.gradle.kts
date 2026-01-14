@@ -1,4 +1,3 @@
-import cn.lalaki.pub.BaseCentralPortalPlusExtension.PublishingType
 import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
 
 val user = "MaleficCompose"
@@ -13,11 +12,9 @@ val localMavenRepo = uri(layout.buildDirectory.dir("repo").get())
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.maven.publish)
     alias(libs.plugins.kotlinter)
-    alias(libs.plugins.central)
     alias(libs.plugins.dokka)
-    `maven-publish`
-    signing
 }
 
 group = g
@@ -77,6 +74,8 @@ kotlin {
 
     mingwX64()
 
+    applyDefaultHierarchyTemplate()
+
     sourceSets {
         val commonMain by getting {
             dependencies {
@@ -88,161 +87,40 @@ kotlin {
                 implementation(kotlin("test"))
             }
         }
-        val jvmMain by getting
-        val jvmTest by getting
-        val jsMain by getting
-        val jsTest by getting
-        val wasmJsMain by getting
-        val wasmJsTest by getting
-        val wasmWasiMain by getting
-        val wasmWasiTest by getting
-        val nativeMain by creating {
-            dependsOn(commonMain)
-        }
-        val nativeTest by creating {
-            dependsOn(commonTest)
-        }
-
-        val androidNativeMain by creating {
-            dependsOn(nativeMain)
-        }
-        val androidNativeArm32Main by getting {
-            dependsOn(androidNativeMain)
-        }
-        val androidNativeArm64Main by getting {
-            dependsOn(androidNativeMain)
-        }
-        val androidNativeX86Main by getting {
-            dependsOn(androidNativeMain)
-        }
-        val androidNativeX64Main by getting {
-            dependsOn(androidNativeMain)
-        }
-
-        val appleMain by creating {
-            dependsOn(nativeMain)
-        }
-
-        val iosMain by creating {
-            dependsOn(appleMain)
-        }
-        val iosX64Main by getting {
-            dependsOn(iosMain)
-        }
-        val iosArm64Main by getting {
-            dependsOn(iosMain)
-        }
-        val iosSimulatorArm64Main by getting {
-            dependsOn(iosMain)
-        }
-
-        val watchosMain by creating {
-            dependsOn(appleMain)
-        }
-        val watchosX64Main by getting {
-            dependsOn(watchosMain)
-        }
-        val watchosArm32Main by getting {
-            dependsOn(watchosMain)
-        }
-        val watchosArm64Main by getting {
-            dependsOn(watchosMain)
-        }
-        val watchosSimulatorArm64Main by getting {
-            dependsOn(watchosMain)
-        }
-        val watchosDeviceArm64Main by getting {
-            dependsOn(watchosMain)
-        }
-
-        val tvosMain by creating {
-            dependsOn(appleMain)
-        }
-        val tvosX64Main by getting {
-            dependsOn(tvosMain)
-        }
-        val tvosArm64Main by getting {
-            dependsOn(tvosMain)
-        }
-        val tvosSimulatorArm64Main by getting {
-            dependsOn(tvosMain)
-        }
-
-        val macosMain by creating {
-            dependsOn(appleMain)
-        }
-        val macosX64Main by getting {
-            dependsOn(macosMain)
-        }
-        val macosArm64Main by getting {
-            dependsOn(macosMain)
-        }
-
-        val linuxMain by creating {
-            dependsOn(nativeMain)
-        }
-        val linuxX64Main by getting {
-            dependsOn(linuxMain)
-        }
-        val linuxArm64Main by getting {
-            dependsOn(linuxMain)
-        }
-
-        val mingwMain by creating {
-            dependsOn(nativeMain)
-        }
-        val mingwX64Main by getting {
-            dependsOn(mingwMain)
-        }
     }
 }
 
-publishing {
-    publications.withType<MavenPublication> {
-        groupId = g
-        artifactId = if (name == "kotlinMultiplatform") artifact else "$artifact-$name"
-        version = v
+mavenPublishing {
+    publishToMavenCentral()
 
-        pom {
-            name.set(repo)
-            description.set(desc)
-            url.set("https://github.com/$user/$repo")
-            developers {
-                developer {
-                    name.set("Om Gupta")
-                    email.set("ogupta4242@gmail.com")
-                }
-            }
-            licenses {
-                license {
-                    name.set("MIT License")
-                    url.set("https://opensource.org/licenses/MIT")
-                }
-            }
-            scm {
-                connection.set("scm:git:git://github.com/$user/$repo.git")
-                developerConnection.set("scm:git:ssh://github.com/$user/$repo.git")
-                url.set("https://github.com/$user/$repo")
+    signAllPublications()
+
+    coordinates(g, artifact, v)
+
+    pom {
+        name = repo
+        description = desc
+        inceptionYear = "2024"
+        url = "https://github.com/$user/$repo"
+        licenses {
+            license {
+                name = "MIT License"
+                url = "https://mit.malefic.xyz"
             }
         }
-    }
-    repositories {
-        maven {
-            url = localMavenRepo
+        developers {
+            developer {
+                name = "Om Gupta"
+                email = "om@malefic.xyz"
+                url = "https://malefic.xyz"
+            }
+        }
+        scm {
+            url = "https://github.com/$user/$repo"
+            connection = "scm:git:git://github.com/$user/$repo.git"
+            developerConnection = "scm:git:ssh://github.com/$user/$repo.git"
         }
     }
-}
-
-signing {
-    useGpgCmd()
-    sign(publishing.publications)
-}
-
-centralPortalPlus {
-    url = localMavenRepo
-    username = System.getenv("centralPortalUsername") ?: ""
-    password = System.getenv("centralPortalPassword") ?: ""
-    publishingType = PublishingType.AUTOMATIC
 }
 
 tasks.apply {

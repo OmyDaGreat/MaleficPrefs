@@ -1,77 +1,103 @@
-name: Create Release on Version Commit
+name: Publish
 
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: 'Version bump type'
+        required: false
+        default: 'patch'
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      custom_version:
+        description: 'Custom version (overrides bump)'
+        required: false
+        type: string
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
-  create_release:
-    runs-on: ubuntu-latest
-
+  publish:
+    name: Release Build and Publish
+    runs-on: macos-latest
     steps:
-      - name: Checkout code
+      - name: Check out code
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
-      - name: Set up Git
-        run: |
-          git config --global --add safe.directory $GITHUB_WORKSPACE
+      - name: Set up JDK 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: 21
 
-      - name: Get commit messages
-        id: commits
-        run: |
-          git log -1 --pretty=format:"%s%n%b" > commit_info.txt
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v5
+        with:
+          gradle-version: "9.2.1"
 
-      - name: Check for version pattern
-        id: version_check
+      - name: Make gradlew Executable
+        run: chmod +x gradlew
+
+      - name: Install xmllint
+        run: brew install libxml2 && brew link --force libxml2
+
+      - name: Bump version in gradle.properties
+        id: bump_version
         run: |
-          if grep -Eo 'version( [0-9]+\.[0-9]+\.[0-9]+|\([0-9]+\.[0-9]+\.[0-9]+\))' commit_info.txt; then
-            echo "Found version in commit."
-            VERSION=$(grep -Eo 'version( [0-9]+\.[0-9]+\.[0-9]+|\([0-9]+\.[0-9]+\.[0-9]+\))' commit_info.txt | head -1 | grep -Eo '[0-9]+\.[0-9]+\.[0-9]+')
-            echo "version=$VERSION" >> $GITHUB_ENV
+          file="gradle.properties"
+          if [ -n "${{ github.event.inputs.custom_version }}" ]; then
+          new_version="${{ github.event.inputs.custom_version }}"
           else
-            echo "No version pattern found. Exiting gracefully."
-            echo "version=none" >> $GITHUB_ENV
+          version_line=$(grep "^v=" "$file" || echo "")
+          version=${version_line#v=}
+          IFS='.' read -r major minor patch <<< "$version"
+          case "${{ github.event.inputs.bump }}" in
+          major)
+          major=$((major+1)); minor=0; patch=0;;
+          minor)
+          minor=$((minor+1)); patch=0;;
+          patch|*)
+          patch=$((patch+1));;
+          esac
+          new_version="$major.$minor.$patch"
           fi
-        shell: bash
+          sed -i '' "s/^v=.*/v=$new_version/" "$file"
+          echo "new_version=$new_version" >> $GITHUB_OUTPUT
 
-      - name: Get previous release tag
-        id: get_previous_tag
-        if: env.version != 'none'
-        run: |
-          PREVIOUS_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
-          echo "previous_tag=$PREVIOUS_TAG" >> $GITHUB_ENV
-        shell: bash
+      - name: Commit and push version bump
+        uses: stefanzweifel/git-auto-commit-action@v7
+        with:
+          commit_message: "chore(release): bump version to ${{ steps.bump_version.outputs.new_version }}"
+          file_pattern: gradle.properties
 
-      - name: Generate changelog
-        id: changelog
-        if: env.version != 'none'
+      - name: Extract Maven Central credentials from token block
+        id: extract-creds
         run: |
-          if [ "$PREVIOUS_TAG" != "" ]; then
-            git log $PREVIOUS_TAG..HEAD --oneline > changelog.txt
-          else
-            git log --oneline > changelog.txt
-          fi
-        shell: bash
+          echo "${{ secrets.SONATYPE_TOKEN_XML }}" > server.xml
+          USERNAME=$(xmllint --xpath "string(//username)" server.xml)
+          PASSWORD=$(xmllint --xpath "string(//password)" server.xml)
+          echo "ORG_GRADLE_PROJECT_mavenCentralUsername=$USERNAME" >> $GITHUB_ENV
+          echo "ORG_GRADLE_PROJECT_mavenCentralPassword=$PASSWORD" >> $GITHUB_ENV
+
+      - name: Publish to MavenCentral
+        run: ./gradlew publishAllPublicationsToMavenCentralRepository --no-configuration-cache
+        env:
+          ORG_GRADLE_PROJECT_signingInMemoryKeyId: ${{ secrets.GPG_KEY_ID }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.GPG_PASSPHRASE }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_PRIVATE_KEY }}
 
       - name: Create GitHub Release
-        if: env.version != 'none'
         uses: softprops/action-gh-release@v2
         with:
-          body: |
-            Changes since last release:
-            ```
-            ${{ steps.changelog.outputs.changelog }}
-            ```
-          tag_name: "v${{ env.version }}"
-          name: "Release v${{ env.version }}"
-          draft: false
-          prerelease: false
-          token: ${{ secrets.GITHUB_TOKEN }}
+          tag_name: v${{ steps.bump_version.outputs.new_version }}
+          name: v${{ steps.bump_version.outputs.new_version }}
           generate_release_notes: true
-          make_latest: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

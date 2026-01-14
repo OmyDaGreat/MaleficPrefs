@@ -12,7 +12,21 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - target: iosSimulatorArm64Test
+            os: macos-latest
+          - target: jvmTest
+            os: ubuntu-latest
+          - target: jsTest
+            os: ubuntu-latest
+          - target: wasmJsTest
+            os: ubuntu-latest
+          - target: testAndroid
+            os: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+
     steps:
       - uses: actions/checkout@v6
       - name: Validate Gradle Wrapper
@@ -27,9 +41,13 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
+      - name: Install Chromium
+        if: matrix.target == 'jsTest' || matrix.target == 'wasmJsTest'
+        run: sudo apt-get update && sudo apt-get install -y chromium-browser
+      - name: Set CHROME_BIN env
+        if: matrix.target == 'jsTest' || matrix.target == 'wasmJsTest'
+        run: echo "CHROME_BIN=$(which chromium-browser)" >> $GITHUB_ENV
       - name: Build with Gradle
         uses: gradle/actions/setup-gradle@v5
-      - name: Grant execute permission for gradlew
-        run: chmod +x ./gradlew
       - name: Run matrix target
-        run: ./gradlew build
+        run: ./gradlew ${{ matrix.target }}
