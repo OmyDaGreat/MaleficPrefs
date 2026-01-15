@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
-
 val user = "MaleficCompose"
 val repo = "MaleficPrefs"
 val g = "xyz.malefic.compose"
@@ -35,20 +33,14 @@ kotlin {
 
     jvm()
 
-    js(IR) {
-        browser()
-        nodejs()
-    }
-
-    @OptIn(ExperimentalWasmDsl::class)
-    wasmJs {
-        browser()
-        nodejs()
-    }
-
-    @OptIn(ExperimentalWasmDsl::class)
-    wasmWasi {
-        nodejs()
+    js {
+        browser {
+            testTask {
+                useKarma {
+                    useChromeHeadless()
+                }
+            }
+        }
     }
 
     androidNativeArm32()

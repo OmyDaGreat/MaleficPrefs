@@ -1,6 +1,5 @@
 package xyz.malefic.compose.prefs
 
-import org.junit.Assert.assertArrayEquals
 import xyz.malefic.compose.prefs.delegate.BooleanPreference
 import xyz.malefic.compose.prefs.delegate.ByteArrayPreference
 import xyz.malefic.compose.prefs.delegate.DoublePreference
@@ -11,6 +10,7 @@ import xyz.malefic.compose.prefs.delegate.SerializablePreference
 import xyz.malefic.compose.prefs.delegate.StringPreference
 import kotlin.test.BeforeTest
 import kotlin.test.Test
+import kotlin.test.assertContentEquals
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -65,10 +65,10 @@ class PreferenceTests {
     @Test
     fun `ByteArrayPreference should return default value if not set`() {
         val testObject by ByteArrayPreference("byteArrayKey", defaultValue = byteArrayOf(1, 2, 3))
-        assertArrayEquals(
-            "Expected default value to be returned when not set",
+        assertContentEquals(
             byteArrayOf(1, 2, 3),
             testObject,
+            "Expected default value to be returned when not set",
         )
     }
 
@@ -76,10 +76,10 @@ class PreferenceTests {
     fun `ByteArrayPreference should store and retrieve value`() {
         var testObject by ByteArrayPreference("byteArrayKey", defaultValue = byteArrayOf())
         testObject = byteArrayOf(4, 5, 6)
-        assertArrayEquals(
-            "Expected value to be stored and retrieved correctly",
+        assertContentEquals(
             byteArrayOf(4, 5, 6),
             testObject,
+            "Expected value to be stored and retrieved correctly",
         )
     }
 
