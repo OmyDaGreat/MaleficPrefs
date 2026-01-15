@@ -73,6 +73,7 @@ class PersistentHashMap<K, V>(
 
     override fun clear() {
         backingMap.clear()
+        saveToPreferences()
     }
 
     fun reset() {
@@ -84,7 +85,7 @@ class PersistentHashMap<K, V>(
 
     override fun containsValue(value: V): Boolean = backingMap.containsValue(value)
 
-    override fun get(key: K): V? = backingMap.get(key)
+    override fun get(key: K): V? = backingMap[key]
 
     override fun isEmpty(): Boolean = backingMap.isEmpty()
 }

@@ -77,6 +77,7 @@ class PersistentHashSet<T>(
 
     override fun clear() {
         backingSet.clear()
+        saveToPreferences()
     }
 
     fun reset() {
@@ -91,4 +92,13 @@ class PersistentHashSet<T>(
     override fun isEmpty(): Boolean = backingSet.isEmpty()
 
     override fun iterator(): MutableIterator<T> = backingSet.iterator()
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || this::class != other::class) return false
+        other as PersistentHashSet<*>
+        return backingSet == other.backingSet
+    }
+
+    override fun hashCode(): Int = backingSet.hashCode()
 }

@@ -109,6 +109,7 @@ class PersistentArrayList<T>(
 
     override fun clear() {
         backingList.clear()
+        saveToPreferences()
     }
 
     fun reset() {
@@ -120,7 +121,7 @@ class PersistentArrayList<T>(
 
     override fun containsAll(elements: Collection<T>): Boolean = backingList.containsAll(elements)
 
-    override fun get(index: Int): T = backingList.get(index)
+    override fun get(index: Int): T = backingList[index]
 
     override fun indexOf(element: T): Int = backingList.indexOf(element)
 
@@ -138,4 +139,13 @@ class PersistentArrayList<T>(
         fromIndex: Int,
         toIndex: Int,
     ): MutableList<T> = backingList.subList(fromIndex, toIndex)
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || this::class != other::class) return false
+        other as PersistentArrayList<*>
+        return backingList == other.backingList
+    }
+
+    override fun hashCode(): Int = backingList.hashCode()
 }

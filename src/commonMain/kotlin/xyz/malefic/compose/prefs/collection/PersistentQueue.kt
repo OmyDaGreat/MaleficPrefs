@@ -103,6 +103,7 @@ class PersistentQueue<T>(
 
     fun clear() {
         backingList.clear()
+        saveToPreferences()
     }
 
     fun reset() {
@@ -115,4 +116,13 @@ class PersistentQueue<T>(
     fun contains(element: T): Boolean = backingList.contains(element)
 
     fun toList(): List<T> = backingList.toList()
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || this::class != other::class) return false
+        other as PersistentQueue<*>
+        return backingList == other.backingList
+    }
+
+    override fun hashCode(): Int = backingList.hashCode()
 }

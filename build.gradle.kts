@@ -25,6 +25,10 @@ repositories {
 }
 
 kotlin {
+    compilerOptions {
+        this.freeCompilerArgs.add("-Xexpect-actual-classes")
+    }
+
     jvmToolchain {
         this.languageVersion.set(JavaLanguageVersion.of(17))
     }
