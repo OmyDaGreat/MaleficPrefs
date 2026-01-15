@@ -45,52 +45,101 @@ class PersistentHashSet<T>(
         prefs.putString(key, jsonString)
     }
 
+    /**
+     * Adds the specified element to the set if it is not already present and saves to preferences.
+     * @param element the element to add
+     * @return true if the element was added
+     */
     override fun add(element: T): Boolean {
         val result = backingSet.add(element)
         saveToPreferences()
         return result
     }
 
+    /**
+     * Adds all elements from the specified collection to this set and saves to preferences.
+     * @param elements the collection of elements to add
+     * @return true if the set was modified
+     */
     override fun addAll(elements: Collection<T>): Boolean {
         val result = backingSet.addAll(elements)
         saveToPreferences()
         return result
     }
 
+    /**
+     * Removes the specified element from the set and saves to preferences.
+     * @param element the element to remove
+     * @return true if the element was removed
+     */
     override fun remove(element: T): Boolean {
         val result = backingSet.remove(element)
         saveToPreferences()
         return result
     }
 
+    /**
+     * Removes all elements from this set that are contained in the specified collection and saves to preferences.
+     * @param elements the collection of elements to remove
+     * @return true if the set was modified
+     */
     override fun removeAll(elements: Collection<T>): Boolean {
         val result = backingSet.removeAll(elements.toSet())
         saveToPreferences()
         return result
     }
 
+    /**
+     * Retains only the elements in this set that are contained in the specified collection and saves to preferences.
+     * @param elements the collection of elements to retain
+     * @return true if the set was modified
+     */
     override fun retainAll(elements: Collection<T>): Boolean {
         val result = backingSet.retainAll(elements.toSet())
         saveToPreferences()
         return result
     }
 
+    /**
+     * Removes all elements from this set and saves the empty state to preferences.
+     */
     override fun clear() {
         backingSet.clear()
         saveToPreferences()
     }
 
+    /**
+     * Clears the set and removes it from preferences entirely.
+     */
     fun reset() {
         clear()
         prefs.remove(key)
     }
 
+    /**
+     * Checks if this set contains the specified element.
+     * @param element the element to check for
+     * @return true if the element is in the set
+     */
     override fun contains(element: T): Boolean = backingSet.contains(element)
 
+    /**
+     * Checks if this set contains all elements from the specified collection.
+     * @param elements the collection of elements to check for
+     * @return true if all elements are in the set
+     */
     override fun containsAll(elements: Collection<T>): Boolean = backingSet.containsAll(elements)
 
+    /**
+     * Returns true if this set contains no elements.
+     * @return true if the set is empty
+     */
     override fun isEmpty(): Boolean = backingSet.isEmpty()
 
+    /**
+     * Returns an iterator over the elements in this set.
+     * @return an iterator
+     */
     override fun iterator(): MutableIterator<T> = backingSet.iterator()
 
     override fun equals(other: Any?): Boolean {

@@ -51,6 +51,12 @@ class PersistentHashMap<K, V>(
         prefs.putString(key, jsonString)
     }
 
+    /**
+     * Associates the specified value with the specified key in this map and saves to preferences.
+     * @param key the key with which the specified value is to be associated
+     * @param value the value to be associated with the specified key
+     * @return the previous value associated with the key, or null if there was no mapping
+     */
     override fun put(
         key: K,
         value: V,
@@ -60,32 +66,66 @@ class PersistentHashMap<K, V>(
         return result
     }
 
+    /**
+     * Copies all mappings from the specified map to this map and saves to preferences.
+     * @param from the map whose mappings are to be copied
+     */
     override fun putAll(from: Map<out K, V>) {
         backingMap.putAll(from)
         saveToPreferences()
     }
 
+    /**
+     * Removes the mapping for the specified key from this map and saves to preferences.
+     * @param key the key whose mapping is to be removed
+     * @return the previous value associated with the key, or null if there was no mapping
+     */
     override fun remove(key: K): V? {
         val result = backingMap.remove(key)
         saveToPreferences()
         return result
     }
 
+    /**
+     * Removes all mappings from this map and saves the empty state to preferences.
+     */
     override fun clear() {
         backingMap.clear()
         saveToPreferences()
     }
 
+    /**
+     * Clears the map and removes it from preferences entirely.
+     */
     fun reset() {
         clear()
         prefs.remove(key)
     }
 
+    /**
+     * Returns true if this map contains a mapping for the specified key.
+     * @param key the key to check for
+     * @return true if the map contains the key
+     */
     override fun containsKey(key: K): Boolean = backingMap.containsKey(key)
 
+    /**
+     * Returns true if this map maps one or more keys to the specified value.
+     * @param value the value to check for
+     * @return true if the map contains the value
+     */
     override fun containsValue(value: V): Boolean = backingMap.containsValue(value)
 
+    /**
+     * Returns the value to which the specified key is mapped, or null if this map contains no mapping for the key.
+     * @param key the key whose associated value is to be returned
+     * @return the value associated with the key, or null
+     */
     override fun get(key: K): V? = backingMap[key]
 
+    /**
+     * Returns true if this map contains no key-value mappings.
+     * @return true if the map is empty
+     */
     override fun isEmpty(): Boolean = backingMap.isEmpty()
 }
